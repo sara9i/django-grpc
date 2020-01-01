@@ -7,7 +7,7 @@ from django.core.management.base import BaseCommand
 from concurrent import futures
 from django.utils import autoreload
 
-from django_grpc.utils import add_servicers, extract_handlers, create_server
+from django_grpc.utils import add_servicers, extract_handlers, create_server, create_secure_server
 
 
 class Command(BaseCommand):
@@ -17,9 +17,12 @@ class Command(BaseCommand):
         parser.add_argument('--max_workers', type=int, help="Number of workers")
         parser.add_argument('--port', type=int, default=50051, help="Port number to listen")
         parser.add_argument('--autoreload', action='store_true', default=False)
+        parser.add_argument('--secure', action='store_true', default=False)
         parser.add_argument('--list-handlers', action='store_true', default=False, help="Print all registered endpoints")
 
     def handle(self, *args, **options):
+        if options['secure'] is True:
+            self.stdout.write("SECURE CHANNEL")
         if options['autoreload'] is True:
             self.stdout.write("ATTENTION! Autoreload is enabled!")
             if hasattr(autoreload, "run_with_reloader"):
@@ -33,9 +36,14 @@ class Command(BaseCommand):
 
     def _serve(self, max_workers, port, *args, **kwargs):
         autoreload.raise_last_exception()
-        self.stdout.write("Starting server at %s" % datetime.datetime.now())
 
-        server = create_server(max_workers, port)
+        if kwargs['secure'] is True:
+            self.stdout.write("Starting insecure server at %s" % datetime.datetime.now())
+            server = create_secure_server(max_workers, port)
+        else:
+            self.stdout.write("Starting Secure server at %s" % datetime.datetime.now())
+            server = create_server(max_workers, port)
+        self.stdout.write("Starting COREEEE serverrrrrrrrrrrrrrrrrrrrr")
         server.start()
 
         self.stdout.write("Server is listening port %s" % port)
